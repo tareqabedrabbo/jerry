@@ -1,6 +1,11 @@
 package jerry;
 
+import jerry.config.ApplicationConfig;
+import jerry.config.CommandsConfig;
+import jerry.format.Formatter;
+import jerry.http.HttpCommand;
 import jerry.parse.Interpreter;
+import jerry.parse.ParsingException;
 import jline.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
@@ -12,17 +17,15 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
-import jerry.http.HttpCommand;
-import jerry.config.ApplicationConfig;
-import jerry.config.CommandsConfig;
-import jerry.format.Formatter;
-import jerry.parse.ParsingException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
 
-import static org.fusesource.jansi.Ansi.Color.*;
+import static org.fusesource.jansi.Ansi.Color.DEFAULT;
+import static org.fusesource.jansi.Ansi.Color.GREEN;
+import static org.fusesource.jansi.Ansi.Color.RED;
+import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.ansi;
 
 
@@ -147,7 +150,8 @@ public class Application {
     }
 
     private String formatError(String message) {
-        return new StringBuilder("=== ").append(message).append(" ===").toString();
+        Ansi ansi = ansi();
+        return ansi.fg(RED).a("=== ").a(message).a(" ===").fg(DEFAULT).toString();
     }
 
     public static void main(String[] args) throws IOException {
