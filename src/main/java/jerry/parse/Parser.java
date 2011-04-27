@@ -1,11 +1,11 @@
 package jerry.parse;
 
-import jerry.http.HttpCommand;
+import java.util.List;
 
 /**
  * @author Tareq Abedrabbo
  */
 public interface Parser {
 
-    HttpCommand parse(String input);
+    List<Token> parse(String line);
 }

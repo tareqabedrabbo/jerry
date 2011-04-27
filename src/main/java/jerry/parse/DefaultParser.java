@@ -1,122 +1,93 @@
 package jerry.parse;
 
-import jerry.http.Get;
-import jerry.http.HttpCommand;
-import jerry.http.Post;
-import jerry.http.Put;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import jerry.Buffer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
  * @author Tareq Abedrabbo
  */
-public class DefaultParser implements Parser, ApplicationContextAware {
+public class DefaultParser implements Parser {
+
+    private final static Pattern JSON = Pattern.compile("\\{.*\\}");
+    private final static Pattern URL = Pattern.compile("http://.*");
+    private final static Pattern EXP = Pattern.compile("(#|\\[).*");
 
     private ExpressionParser expressionParser;
 
-    private final static Pattern JSON_DATA = Pattern.compile("\\{.*\\}");
+    private Buffer buffer;
 
-    private ApplicationContext applicationContext;
-
-    private Map<String, Object> buffer;
-
+    @Autowired
     public void setExpressionParser(ExpressionParser expressionParser) {
         this.expressionParser = expressionParser;
     }
 
-    public void setBuffer(Map<String, Object> buffer) {
+    @Autowired
+    public void setBuffer(Buffer buffer) {
         this.buffer = buffer;
     }
 
-    public HttpCommand parse(String input) {
-        Assert.hasText(input);
-        Scanner scanner = new Scanner(input);
-        String command = scanner.next();
-        if (command.equals("get")) {
-            String url = extractRequiredUrl(scanner, input);
-            Get get = applicationContext.getBean(Get.class);
-            get.setUrl(url);
-            return get;
-        }
-
-        if (command.equals("put")) {
-            String url = extractRequiredUrl(scanner, input);
-            String body = extractData(scanner);
-
-            Put put = applicationContext.getBean(Put.class);
-            put.setUrl(url);
-            put.setBody(body);
-            return put;
-        }
-
-        if (command.equals("post")) {
-            String url = extractRequiredUrl(scanner, input);
-            String body = extractData(scanner);
-
-            Post post = applicationContext.getBean(Post.class);
-            post.setUrl(url);
-            post.setBody(body);
-            return post;
-        }
-
-        throw new ParsingException("unable to parse [" + input + "]");
+    @Override
+    public List<Token> parse(String line) {
+        Assert.hasText(line);
+        return evaluate(tokenise(line));
     }
 
-    private String extractData(Scanner scanner) {
-        if (!scanner.hasNext()) {
-            return null;
+    private List<Token> tokenise(String line) {
+        List<Token> tokens = new ArrayList<Token>();
+        Scanner scanner = new Scanner(line);
+        String command = scanner.next();
+        tokens.add(new Token(Token.Type.COMMAND, command));
+
+        while (scanner.hasNext()) {
+            if (scanner.hasNext(URL)) {
+                tokens.add(new Token(Token.Type.URL, scanner.next(URL)));
+            } else if (scanner.hasNext(JSON)) {
+                tokens.add(new Token(Token.Type.JSON, scanner.next(JSON)));
+            } else if (scanner.hasNext(EXP)) {
+                tokens.add(new Token(Token.Type.EXP, scanner.next(EXP)));
+            } else {
+                tokens.add(new Token(Token.Type.STRING, scanner.next()));
+            }
         }
 
-        //json data
-        if (scanner.hasNext(JSON_DATA)) {
-            return scanner.next(JSON_DATA);
-        }
+        return tokens;
+    }
 
-        //try spel
-        String next = scanner.next();
-        return evaluateExpression(next);
+    private List<Token> evaluate(List<Token> tokens) {
+        for (Token token : tokens) {
+            if (token.type == Token.Type.EXP) {
+                token.value = evaluateExpression(token.value);
+            }
+        }
+        return tokens;
     }
 
     private String evaluateExpression(String exp) {
         try {
             EvaluationContext context = new StandardEvaluationContext(buffer);
-            if (buffer.containsKey("_response")) {
-                context.setVariable("data", ((ResponseEntity<String>) buffer.get("_response")).getBody());
-            }
+            bindVariables(context);
             Expression expression = expressionParser.parseExpression(exp);
             return expression.getValue(context, String.class);
         } catch (ParseException e) {
-            throw new ParsingException(e.getMessage());
+            throw new ParsingException(e.getMessage(), e);
         }
     }
 
-    private String extractRequiredUrl(Scanner scanner, String input) {
-        if (!scanner.hasNext()) {
-            throw new ParsingException("incomplete command [" + input + "]");
+    private void bindVariables(EvaluationContext context) {
+        if (buffer.containsKey("_response")) {
+            context.setVariable("data", ((ResponseEntity<String>) buffer.get("_response")).getBody());
         }
-
-        String next = scanner.next();
-        if (next.startsWith("http://")) {
-            return next;
-        }
-        // try spel
-        return evaluateExpression(next);
-    }
-
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
     }
 }
