@@ -13,7 +13,7 @@ public class Put extends AbstractHttpCommand {
 
     @Override
     public ResponseEntity<Map<String, Object>> runInternal() {
-        HttpEntity<String> request = createRequest();
+        HttpEntity<Object> request = createRequest();
         ResponseEntity response = restOperations.exchange(url, HttpMethod.PUT, request, Map.class);
         return response;
     }

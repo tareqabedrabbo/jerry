@@ -67,19 +67,18 @@ public class DefaultParser implements Parser {
 
     private List<Token> evaluate(List<Token> tokens) {
         for (Token token : tokens) {
-            if (token.type == Token.Type.EXP) {
-                token.value = evaluateExpression(token.value);
-            }
+            token.evaluated =
+                    token.type == Token.Type.EXP ? evaluateExpression(token.value) : token.value;
         }
         return tokens;
     }
 
-    private String evaluateExpression(String exp) {
+    private Object evaluateExpression(String exp) {
         try {
             EvaluationContext context = new StandardEvaluationContext(buffer);
             bindVariables(context);
             Expression expression = expressionParser.parseExpression(exp);
-            return expression.getValue(context, String.class);
+            return expression.getValue(context);
         } catch (ParseException e) {
             throw new ParsingException(e.getMessage(), e);
         }

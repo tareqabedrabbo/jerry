@@ -13,7 +13,7 @@ public class Post extends AbstractHttpCommand {
 
     @Override
     protected ResponseEntity<Map<String, Object>> runInternal() {
-        HttpEntity<String> request = createRequest();
+        HttpEntity<Object> request = createRequest();
         ResponseEntity response = restOperations.exchange(url, HttpMethod.POST, request, Map.class);
         return response;
     }

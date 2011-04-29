@@ -34,7 +34,7 @@ public class ApplicationConfig {
 
     @Bean
     public String[] commands() {
-        return new String[]{"get", "post", "put", "delete", "head", "quit", "exit", "buffer", "details"};
+        return new String[]{"get", "post", "put", "delete", "head", "quit", "exit", "buffer", "details", "eval"};
     }
 
     @Bean

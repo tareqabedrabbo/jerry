@@ -27,7 +27,7 @@ public abstract class AbstractHttpCommand implements HttpCommand {
 
     protected String url;
 
-    protected String body;
+    protected Object body;
 
     public void setBuffer(Buffer buffer) {
         this.buffer = buffer;
@@ -41,7 +41,7 @@ public abstract class AbstractHttpCommand implements HttpCommand {
         this.url = url;
     }
 
-    public void setBody(String body) {
+    public void setBody(Object body) {
         this.body = body;
     }
 
@@ -59,10 +59,10 @@ public abstract class AbstractHttpCommand implements HttpCommand {
 
     protected abstract ResponseEntity<Map<String, Object>> runInternal();
 
-    protected HttpEntity<String> createRequest() {
+    protected HttpEntity<Object> createRequest() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(ACCEPTABLE_MEDIA_TYPES);
-        return new HttpEntity<String>(body, headers);
+        return new HttpEntity<Object>(body, headers);
     }
 }

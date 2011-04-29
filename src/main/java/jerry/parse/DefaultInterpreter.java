@@ -45,7 +45,7 @@ public class DefaultInterpreter implements Interpreter, ApplicationContextAware 
 
         if (command.equals("put")) {
             String url = getRequiredUrl(tokens, 1);
-            String body = getData(tokens, 2);
+            Object body = getData(tokens, 2);
 
             Put put = applicationContext.getBean(Put.class);
             put.setUrl(url);
@@ -55,7 +55,7 @@ public class DefaultInterpreter implements Interpreter, ApplicationContextAware 
 
         if (command.equals("post")) {
             String url = getRequiredUrl(tokens, 1);
-            String body = getData(tokens, 2);
+            Object body = getData(tokens, 2);
 
             Post post = applicationContext.getBean(Post.class);
             post.setUrl(url);
@@ -66,18 +66,18 @@ public class DefaultInterpreter implements Interpreter, ApplicationContextAware 
         throw new ParsingException("unable to parse [" + input + "]");
     }
 
-    private String getData(List<Token> tokens, int position) {
+    private Object getData(List<Token> tokens, int position) {
         if (tokens.size() <= position) {
             return null;
         }
-        return tokens.get(position).value;
+        return tokens.get(position).evaluated;
     }
 
     private String getRequiredUrl(List<Token> tokens, int position) {
         if (tokens.size() < position + 1) {
             throw new ParsingException("incomplete command [" + tokens.get(0).value + "]");
         }
-        return tokens.get(position).value;
+        return String.valueOf(tokens.get(position).evaluated);
     }
 
 }

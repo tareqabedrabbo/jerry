@@ -5,8 +5,9 @@ package jerry.parse;
  */
 public class Token {
 
-    Type type;
-    String value;
+    final Type type;
+    final String value;
+    Object evaluated;
 
     public Token(Type type, String value) {
         this.type = type;
@@ -16,7 +17,8 @@ public class Token {
     @Override
     public String toString() {
         return "Token{" +
-                "type=" + type +
+                "evaluated=" + evaluated +
+                ", type=" + type +
                 ", value='" + value + '\'' +
                 '}';
     }

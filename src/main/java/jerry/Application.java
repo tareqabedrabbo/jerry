@@ -11,6 +11,7 @@ import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionException;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
 import org.springframework.http.HttpHeaders;
@@ -45,7 +46,7 @@ public class Application {
     private Formatter formatter;
 
     private Settings settings;
-    
+
     private String prompt = "jerry> ";
 
     public void setExpressionParser(ExpressionParser expressionParser) {
@@ -89,7 +90,7 @@ public class Application {
                 }
 
                 // expression parsing
-                if (line.startsWith("@")) {
+                if (line.startsWith("eval ")) {
                     evaluateExpression(line, out);
                     continue;
                 }
@@ -116,12 +117,12 @@ public class Application {
     }
 
     private void evaluateExpression(String line, PrintWriter out) {
-        String expressionString = line.substring(line.indexOf('@') + 1).trim();
+        String expressionString = line.substring(5).trim();
         try {
             Expression expression = expressionParser.parseExpression(expressionString);
             Object value = expression.getValue(buffer);
             out.println(value);
-        } catch (ParseException e) {
+        } catch (ExpressionException e) {
             out.println(formatError(e.getMessage()));
         } finally {
             out.flush();
