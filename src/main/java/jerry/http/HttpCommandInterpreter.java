@@ -1,9 +1,9 @@
-package jerry.parse;
+package jerry.http;
 
-import jerry.http.Get;
-import jerry.http.HttpCommand;
-import jerry.http.Post;
-import jerry.http.Put;
+import jerry.command.Interpreter;
+import jerry.parse.Parser;
+import jerry.parse.ParsingException;
+import jerry.parse.Token;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author Tareq Abedrabbo
  */
-public class DefaultInterpreter implements Interpreter, ApplicationContextAware {
+public class HttpCommandInterpreter implements Interpreter<HttpCommand>, ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 

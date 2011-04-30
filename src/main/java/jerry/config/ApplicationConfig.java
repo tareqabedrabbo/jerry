@@ -1,9 +1,10 @@
 package jerry.config;
 
 import jerry.Buffer;
-import jerry.parse.DefaultInterpreter;
+import jerry.command.Interpreter;
+import jerry.http.HttpCommand;
+import jerry.http.HttpCommandInterpreter;
 import jerry.parse.DefaultParser;
-import jerry.parse.Interpreter;
 import jerry.parse.Parser;
 import jline.ConsoleReader;
 import jline.SimpleCompletor;
@@ -47,7 +48,7 @@ public class ApplicationConfig {
         Application application = new Application();
         application.setBuffer(buffer());
         application.setConsoleReader(consoleReader());
-        application.setInterpreter(interpreter());
+        application.setHttpInterpreter(httpInterpreter());
         application.setFormatter(formatter());
         application.setSettings(settings());
         application.setExpressionParser(expressionParser());
@@ -55,8 +56,8 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public Interpreter interpreter() {
-        DefaultInterpreter interpreter = new DefaultInterpreter();
+    public Interpreter<HttpCommand> httpInterpreter() {
+        HttpCommandInterpreter interpreter = new HttpCommandInterpreter();
         return interpreter;
     }
 

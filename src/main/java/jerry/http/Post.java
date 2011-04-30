@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * @author Tareq Abedrabbo
  */
-public class Post extends AbstractHttpCommand {
+public class Post extends HttpCommand {
 
     @Override
     protected ResponseEntity<Map<String, Object>> runInternal() {

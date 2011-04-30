@@ -4,7 +4,7 @@ import jerry.config.ApplicationConfig;
 import jerry.config.CommandsConfig;
 import jerry.format.Formatter;
 import jerry.http.HttpCommand;
-import jerry.parse.Interpreter;
+import jerry.command.Interpreter;
 import jerry.parse.ParsingException;
 import jline.ConsoleReader;
 import org.fusesource.jansi.Ansi;
@@ -13,7 +13,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionException;
 import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.ParseException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -41,7 +40,7 @@ public class Application {
 
     private ConsoleReader consoleReader;
 
-    private Interpreter interpreter;
+    private Interpreter<HttpCommand> httpInterpreter;
 
     private Formatter formatter;
 
@@ -65,8 +64,8 @@ public class Application {
         this.consoleReader = consoleReader;
     }
 
-    public void setInterpreter(Interpreter interpreter) {
-        this.interpreter = interpreter;
+    public void setHttpInterpreter(Interpreter<HttpCommand> httpInterpreter) {
+        this.httpInterpreter = httpInterpreter;
     }
 
     public void setSettings(Settings settings) {
@@ -103,7 +102,7 @@ public class Application {
 
     private void runHttpCommand(String line, PrintWriter out) {
         try {
-            HttpCommand httpCommand = interpreter.interpret(line);
+            HttpCommand httpCommand = httpInterpreter.interpret(line);
             ResponseEntity<Map<String, Object>> response = httpCommand.run();
             printResponse(out, response);
         } catch (ParsingException e) {

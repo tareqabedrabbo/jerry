@@ -5,9 +5,9 @@ package jerry.parse;
  */
 public class Token {
 
-    final Type type;
-    final String value;
-    Object evaluated;
+    public final Type type;
+    public final String value;
+    public Object evaluated;
 
     public Token(Type type, String value) {
         this.type = type;

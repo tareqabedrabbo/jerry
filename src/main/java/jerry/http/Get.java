@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * @author Tareq Abedrabbo
  */
-public class Get extends AbstractHttpCommand {
+public class Get extends HttpCommand {
 
     @Override
     public ResponseEntity<Map<String, Object>> runInternal() {
