@@ -1,7 +1,11 @@
 package jerry.config;
 
+import jerry.Application;
 import jerry.Buffer;
+import jerry.Settings;
 import jerry.command.Interpreter;
+import jerry.format.DefaultFormatter;
+import jerry.format.Formatter;
 import jerry.http.HttpCommand;
 import jerry.http.HttpCommandInterpreter;
 import jerry.parse.DefaultParser;
@@ -12,12 +16,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import jerry.Application;
-import jerry.Settings;
-import jerry.format.DefaultFormatter;
-import jerry.format.Formatter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
 
 /**
  * @author Tareq Abedrabbo
@@ -29,14 +34,34 @@ public class ApplicationConfig {
     @Bean
     public ConsoleReader consoleReader() throws IOException {
         ConsoleReader reader = new ConsoleReader();
-        reader.addCompletor(new SimpleCompletor(commands()));
+        reader.addCompletor(new SimpleCompletor(allCommands().toArray(new String[0])));
         return reader;
     }
 
     @Bean
-    public String[] commands() {
-        return new String[]{"get", "post", "put", "delete", "head", "quit", "exit", "buffer", "details", "eval"};
+    public List<String> allCommands() {
+        List<String> commands = new ArrayList<String>();
+        commands.addAll(simpleCommands());
+        commands.addAll(generalCommands());
+        commands.addAll(httpCommands());
+        return commands;
     }
+
+    @Bean
+    public List<String> simpleCommands() {
+        return unmodifiableList(asList("quit", "exit", "eval", "buffer"));
+    }
+
+    @Bean
+    public List<String> httpCommands() {
+        return unmodifiableList(asList("get", "post", "put", "delete", "head"));
+    }
+
+    @Bean
+    public List<String> generalCommands() {
+        return unmodifiableList(asList("set", "details"));
+    }
+
 
     @Bean
     public Buffer buffer() {
