@@ -1,11 +1,12 @@
 package jerry;
 
+import jerry.command.Interpreter;
 import jerry.config.ApplicationConfig;
 import jerry.config.CommandsConfig;
 import jerry.format.Formatter;
-import jerry.http.HttpCommand;
-import jerry.command.Interpreter;
+import jerry.parse.Parser;
 import jerry.parse.ParsingException;
+import jerry.parse.Token;
 import jline.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
@@ -20,6 +21,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 
 import static org.fusesource.jansi.Ansi.Color.DEFAULT;
@@ -40,13 +42,17 @@ public class Application {
 
     private ConsoleReader consoleReader;
 
-    private Interpreter<HttpCommand> httpInterpreter;
+    private Interpreter<ResponseEntity<Map<String, Object>>> httpCommandInterpreter;
+
+    private Interpreter<String> generalCommandInterpreter;
 
     private Formatter formatter;
 
     private Settings settings;
 
     private String prompt = "jerry> ";
+
+    private Parser parser;
 
     public void setExpressionParser(ExpressionParser expressionParser) {
         this.expressionParser = expressionParser;
@@ -64,12 +70,20 @@ public class Application {
         this.consoleReader = consoleReader;
     }
 
-    public void setHttpInterpreter(Interpreter<HttpCommand> httpInterpreter) {
-        this.httpInterpreter = httpInterpreter;
+    public void setHttpCommandInterpreter(Interpreter<ResponseEntity<Map<String, Object>>> httpCommandInterpreter) {
+        this.httpCommandInterpreter = httpCommandInterpreter;
+    }
+
+    public void setGeneralCommandInterpreter(Interpreter<String> generalCommandInterpreter) {
+        this.generalCommandInterpreter = generalCommandInterpreter;
     }
 
     public void setSettings(Settings settings) {
         this.settings = settings;
+    }
+
+    public void setParser(Parser parser) {
+        this.parser = parser;
     }
 
     public void run() throws IOException {
@@ -77,33 +91,34 @@ public class Application {
         PrintWriter out = new PrintWriter(System.out);
 
         while ((line = consoleReader.readLine(prompt)) != null) {
-            line = line.trim();
             if (StringUtils.hasText(line)) {
-                if (line.equalsIgnoreCase("quit") || line.equalsIgnoreCase("exit")) {
-                    break;
+                List<Token> tokens = parser.parse(line);
+                Token commandToken = tokens.get(0);
+                //TODO generic exception handling
+                if (generalCommandInterpreter.supports(commandToken)) {
+                    runGeneralCommand(tokens, out);
+                } else if (httpCommandInterpreter.supports(commandToken)) {
+                    runHttpCommand(tokens, out);
+                } else {
+                    //TODO parser verifies commands
+                    formatError("Unknown command: " + commandToken.value);
                 }
-
-                if (line.equals("buffer")) {
-                    printBuffer(out);
-                    continue;
-                }
-
-                // expression parsing
-                if (line.startsWith("eval ")) {
-                    evaluateExpression(line, out);
-                    continue;
-                }
-
-                // http parsing
-                runHttpCommand(line, out);
             }
         }
     }
 
-    private void runHttpCommand(String line, PrintWriter out) {
+    private void runGeneralCommand(List<Token> tokens, PrintWriter out) {
+        String result = generalCommandInterpreter.interpret(tokens);
+        Ansi ansi = ansi();
+        ansi.fg(GREEN).a(result).reset();
+        out.println(ansi.toString());
+        out.flush();
+    }
+
+
+    private void runHttpCommand(List<Token> tokens, PrintWriter out) {
         try {
-            HttpCommand httpCommand = httpInterpreter.interpret(line);
-            ResponseEntity<Map<String, Object>> response = httpCommand.run();
+            ResponseEntity<Map<String, Object>> response = httpCommandInterpreter.interpret(tokens);
             printResponse(out, response);
         } catch (ParsingException e) {
             out.println(formatError(e.getMessage()));

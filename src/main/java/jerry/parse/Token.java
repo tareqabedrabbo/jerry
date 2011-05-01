@@ -23,7 +23,7 @@ public class Token {
                 '}';
     }
 
-    static enum Type {
+    public static enum Type {
         COMMAND, JSON, EXP, URL, STRING;
     }
 }

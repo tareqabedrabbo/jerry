@@ -1,9 +1,15 @@
 package jerry.command;
 
+import jerry.parse.Token;
+
+import java.util.List;
+
 /**
  * @author Tareq Abedrabbo
  */
-public interface Interpreter<T extends Command> {
+public interface Interpreter<T> {
 
-    T interpret(String input);
+    T interpret(List<Token> tokens);
+
+    boolean supports(Token commandToken);
 }

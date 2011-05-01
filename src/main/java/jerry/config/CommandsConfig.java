@@ -1,15 +1,15 @@
 package jerry.config;
 
 import jerry.Buffer;
+import jerry.http.Get;
+import jerry.http.HttpCommand;
+import jerry.http.Post;
+import jerry.http.Put;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.client.RestOperations;
-import jerry.http.HttpCommand;
-import jerry.http.Get;
-import jerry.http.Post;
-import jerry.http.Put;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Constructor;

@@ -8,39 +8,40 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Tareq Abedrabbo
  */
-public class HttpCommandInterpreter implements Interpreter<HttpCommand>, ApplicationContextAware {
+public class HttpCommandInterpreter implements Interpreter<ResponseEntity<Map<String, Object>>>, ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
-    private Parser parser;
+    private List<String> httpCommands;
 
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
-    @Autowired
-    public void setParser(Parser parser) {
-        this.parser = parser;
+    @Resource(name="httpCommands")
+    public void setHttpCommands(List<String> httpCommands) {
+        this.httpCommands = httpCommands;
     }
 
-    public HttpCommand interpret(String input) {
-        Assert.hasText(input);
-
-        List<Token> tokens = parser.parse(input);
+    public ResponseEntity<Map<String, Object>> interpret(List<Token> tokens) {
         String command = tokens.get(0).value;
+        HttpCommand httpCommand = null;
 
         if (command.equals("get")) {
             String url = getRequiredUrl(tokens, 1);
             Get get = applicationContext.getBean(Get.class);
             get.setUrl(url);
-            return get;
+            httpCommand = get;
         }
 
         if (command.equals("put")) {
@@ -50,7 +51,7 @@ public class HttpCommandInterpreter implements Interpreter<HttpCommand>, Applica
             Put put = applicationContext.getBean(Put.class);
             put.setUrl(url);
             put.setBody(body);
-            return put;
+            httpCommand = put;
         }
 
         if (command.equals("post")) {
@@ -60,10 +61,16 @@ public class HttpCommandInterpreter implements Interpreter<HttpCommand>, Applica
             Post post = applicationContext.getBean(Post.class);
             post.setUrl(url);
             post.setBody(body);
-            return post;
+            httpCommand = post;
         }
+        
+        return httpCommand.run();
+    }
 
-        throw new ParsingException("unable to parse [" + input + "]");
+    @Override
+    public boolean supports(Token command) {
+        Assert.isTrue(command.type == Token.Type.COMMAND);
+        return httpCommands.contains(command.value);
     }
 
     private Object getData(List<Token> tokens, int position) {

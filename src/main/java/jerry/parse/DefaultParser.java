@@ -26,6 +26,8 @@ public class DefaultParser implements Parser {
 
     private ExpressionParser expressionParser;
 
+    private EvaluationContext evaluationContext;
+
     private Buffer buffer;
 
     @Autowired
@@ -38,9 +40,15 @@ public class DefaultParser implements Parser {
         this.buffer = buffer;
     }
 
+    @Autowired
+    public void setEvaluationContext(EvaluationContext evaluationContext) {
+        this.evaluationContext = evaluationContext;
+    }
+
     @Override
     public List<Token> parse(String line) {
         Assert.hasText(line);
+        line = line.trim();
         return evaluate(tokenise(line));
     }
 
@@ -48,7 +56,14 @@ public class DefaultParser implements Parser {
         List<Token> tokens = new ArrayList<Token>();
         Scanner scanner = new Scanner(line);
         String command = scanner.next();
-        tokens.add(new Token(Token.Type.COMMAND, command));
+        Token commandToken = new Token(Token.Type.COMMAND, command);
+        tokens.add(commandToken);
+
+        // eval is a special case
+        if (commandToken.value.equals("eval")) {
+            tokens.add(new Token(Token.Type.STRING, scanner.nextLine()));
+            return tokens;
+        }
 
         while (scanner.hasNext()) {
             if (scanner.hasNext(URL)) {
@@ -75,10 +90,9 @@ public class DefaultParser implements Parser {
 
     private Object evaluateExpression(String exp) {
         try {
-            EvaluationContext context = new StandardEvaluationContext(buffer);
-            bindVariables(context);
+            bindVariables(evaluationContext);
             Expression expression = expressionParser.parseExpression(exp);
-            return expression.getValue(context);
+            return expression.getValue(evaluationContext);
         } catch (ParseException e) {
             throw new ParsingException(e.getMessage(), e);
         }
