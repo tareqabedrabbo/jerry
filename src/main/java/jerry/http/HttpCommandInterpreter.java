@@ -62,6 +62,15 @@ public class HttpCommandInterpreter implements Interpreter<ResponseEntity<Map<St
             httpCommand = post;
         }
         
+        if (command.equals("delete")) {
+            String url = Utils.getRequiredString(tokens, 1);
+            Delete delete = applicationContext.getBean(Delete.class);
+            delete.setUrl(url);
+            httpCommand = delete;
+        }
+
+
+        
         return httpCommand.run();
     }
 

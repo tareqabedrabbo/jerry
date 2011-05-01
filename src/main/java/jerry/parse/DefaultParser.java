@@ -4,8 +4,8 @@ import jerry.Buffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionException;
 import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 
@@ -103,13 +103,15 @@ public class DefaultParser implements Parser {
             bindVariables(evaluationContext);
             Expression expression = expressionParser.parseExpression(exp);
             return expression.getValue(evaluationContext);
-        } catch (ParseException e) {
+        } catch (ExpressionException e) {
+            throw new ParsingException(e.getMessage(), e);
+        } catch (IllegalStateException e) {
             throw new ParsingException(e.getMessage(), e);
         }
     }
 
     private void bindVariables(EvaluationContext context) {
-        if (buffer.containsKey("_response")) {
+        if (buffer.get("_response") != null) {
             context.setVariable("data", ((ResponseEntity<String>) buffer.get("_response")).getBody());
         }
     }

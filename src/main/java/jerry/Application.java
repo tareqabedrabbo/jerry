@@ -119,7 +119,13 @@ public class Application {
 
     private void runHttpCommand(List<Token> tokens, PrintWriter out) {
         ResponseEntity<Map<String, Object>> response = httpCommandInterpreter.interpret(tokens);
-        printResponse(out, response);
+        if (response != null) {
+            printResponse(out, response);
+        } else {
+            Ansi ansi = ansi();
+            ansi.fg(GREEN).a("OK").reset();
+            out.println(ansi.toString());
+        }
     }
 
     private void printResponse(PrintWriter out, ResponseEntity<Map<String, Object>> response) {

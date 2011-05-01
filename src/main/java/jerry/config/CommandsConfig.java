@@ -1,6 +1,7 @@
 package jerry.config;
 
 import jerry.Buffer;
+import jerry.http.Delete;
 import jerry.http.Get;
 import jerry.http.HttpCommand;
 import jerry.http.Post;
@@ -47,6 +48,13 @@ public class CommandsConfig {
     public Post post() throws Exception {
         return createCommand(Post.class);
     }
+
+    @Bean
+    @Scope(SCOPE_PROTOTYPE)
+    public Delete delete() throws Exception {
+        return createCommand(Delete.class);
+    }
+
 
     private <T extends HttpCommand> T createCommand(Class<T> commandClass) throws Exception {
         Constructor<T> constructor = commandClass.getConstructor();
