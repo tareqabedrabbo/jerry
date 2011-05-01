@@ -1,16 +1,16 @@
 package jerry.general;
 
 import jerry.Buffer;
+import jerry.Settings;
+import jerry.Utils;
 import jerry.command.Interpreter;
 import jerry.parse.ParsingException;
 import jerry.parse.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionException;
 import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.ParseException;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -28,6 +28,7 @@ public class GeneralCommandInterpreter implements Interpreter<String> {
 
     private List<String> generalCommands;
 
+    private Settings settings;
 
     @Autowired
     public void setEvaluationContext(EvaluationContext evaluationContext) {
@@ -49,6 +50,11 @@ public class GeneralCommandInterpreter implements Interpreter<String> {
         this.expressionParser = expressionParser;
     }
 
+    @Autowired
+    public void setSettings(Settings settings) {
+        this.settings = settings;
+    }
+
     @Override
     public String interpret(List<Token> tokens) {
         String command = tokens.get(0).value;
@@ -61,7 +67,27 @@ public class GeneralCommandInterpreter implements Interpreter<String> {
         }
 
         if (command.equals("eval")) {
-            return evaluate(tokens.get(1).value);
+            String expression = Utils.getRequiredString(tokens, 1);
+            return evaluate(expression);
+        }
+
+        if (command.equals("set")) {
+            String key = Utils.getRequiredString(tokens, 1);
+            Object value = Utils.getRequired(tokens, 2);
+            buffer.put(key, value);
+            return String.valueOf(value);
+        }
+
+        if (command.equals("details")) {
+            String option = Utils.getString(tokens, 1);
+            if (option == null) {
+                settings.printResponseDetails = !settings.printResponseDetails;
+                return Boolean.toString(settings.printResponseDetails);
+            } else {
+                Boolean booleanValue = Boolean.valueOf(option);
+                settings.printResponseDetails = booleanValue;
+                return booleanValue.toString();
+            }
         }
 
         return null;

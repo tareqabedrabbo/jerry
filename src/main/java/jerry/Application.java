@@ -11,9 +11,6 @@ import jline.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.expression.EvaluationException;
-import org.springframework.expression.Expression;
-import org.springframework.expression.ExpressionException;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +24,7 @@ import java.util.Map;
 
 import static org.fusesource.jansi.Ansi.Color.DEFAULT;
 import static org.fusesource.jansi.Ansi.Color.GREEN;
+import static org.fusesource.jansi.Ansi.Color.MAGENTA;
 import static org.fusesource.jansi.Ansi.Color.RED;
 import static org.fusesource.jansi.Ansi.Color.YELLOW;
 import static org.fusesource.jansi.Ansi.ansi;
@@ -127,14 +125,14 @@ public class Application {
     private void printResponse(PrintWriter out, ResponseEntity<Map<String, Object>> response) {
         if (settings.printResponseDetails) {
             Ansi ansi = ansi();
-            ansi.a("http status: ").fg(GREEN).a(response.getStatusCode()).reset().newline();
-            ansi.fg(YELLOW).a("==== headers ====").reset().newline();
+            ansi.fg(YELLOW).a("http status: ").fg(GREEN).a(response.getStatusCode()).reset().newline();
+            ansi.fg(MAGENTA).a("==== headers ====").reset().newline();
             HttpHeaders headers = response.getHeaders();
             for (String key : headers.keySet()) {
                 String value = StringUtils.collectionToCommaDelimitedString(headers.get(key));
-                ansi.a(key).a(": ").fg(GREEN).a(value).newline().reset();
+                ansi.fg(YELLOW).a(key).a(": ").fg(GREEN).a(value).newline().reset();
             }
-            ansi.fg(YELLOW).a("=================").reset();
+            ansi.fg(MAGENTA).a("=================").reset();
             out.println(ansi);
         }
         out.println(formatter.format(response.getBody()));

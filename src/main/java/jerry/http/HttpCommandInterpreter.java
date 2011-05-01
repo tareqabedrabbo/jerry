@@ -1,11 +1,9 @@
 package jerry.http;
 
+import jerry.Utils;
 import jerry.command.Interpreter;
-import jerry.parse.Parser;
-import jerry.parse.ParsingException;
 import jerry.parse.Token;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.ResponseEntity;
@@ -38,15 +36,15 @@ public class HttpCommandInterpreter implements Interpreter<ResponseEntity<Map<St
         HttpCommand httpCommand = null;
 
         if (command.equals("get")) {
-            String url = getRequiredUrl(tokens, 1);
+            String url = Utils.getRequiredString(tokens, 1);
             Get get = applicationContext.getBean(Get.class);
             get.setUrl(url);
             httpCommand = get;
         }
 
         if (command.equals("put")) {
-            String url = getRequiredUrl(tokens, 1);
-            Object body = getData(tokens, 2);
+            String url = Utils.getRequiredString(tokens, 1);
+            Object body = Utils.getOptional(tokens, 2);
 
             Put put = applicationContext.getBean(Put.class);
             put.setUrl(url);
@@ -55,8 +53,8 @@ public class HttpCommandInterpreter implements Interpreter<ResponseEntity<Map<St
         }
 
         if (command.equals("post")) {
-            String url = getRequiredUrl(tokens, 1);
-            Object body = getData(tokens, 2);
+            String url = Utils.getRequiredString(tokens, 1);
+            Object body = Utils.getOptional(tokens, 2);
 
             Post post = applicationContext.getBean(Post.class);
             post.setUrl(url);
@@ -72,19 +70,4 @@ public class HttpCommandInterpreter implements Interpreter<ResponseEntity<Map<St
         Assert.isTrue(command.type == Token.Type.COMMAND);
         return httpCommands.contains(command.value);
     }
-
-    private Object getData(List<Token> tokens, int position) {
-        if (tokens.size() <= position) {
-            return null;
-        }
-        return tokens.get(position).evaluated;
-    }
-
-    private String getRequiredUrl(List<Token> tokens, int position) {
-        if (tokens.size() < position + 1) {
-            throw new ParsingException("incomplete command [" + tokens.get(0).value + "]");
-        }
-        return String.valueOf(tokens.get(position).evaluated);
-    }
-
 }
