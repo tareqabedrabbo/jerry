@@ -11,6 +11,7 @@ import jline.ConsoleReader;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionException;
 import org.springframework.expression.ExpressionParser;
@@ -38,8 +39,6 @@ public class Application {
 
     private ExpressionParser expressionParser;
 
-    private Buffer buffer;
-
     private ConsoleReader consoleReader;
 
     private Interpreter<ResponseEntity<Map<String, Object>>> httpCommandInterpreter;
@@ -56,10 +55,6 @@ public class Application {
 
     public void setExpressionParser(ExpressionParser expressionParser) {
         this.expressionParser = expressionParser;
-    }
-
-    public void setBuffer(Buffer buffer) {
-        this.buffer = buffer;
     }
 
     public void setFormatter(Formatter formatter) {
@@ -92,19 +87,29 @@ public class Application {
 
         while ((line = consoleReader.readLine(prompt)) != null) {
             if (StringUtils.hasText(line)) {
-                List<Token> tokens = parser.parse(line);
-                Token commandToken = tokens.get(0);
-                //TODO generic exception handling
-                if (generalCommandInterpreter.supports(commandToken)) {
-                    runGeneralCommand(tokens, out);
-                } else if (httpCommandInterpreter.supports(commandToken)) {
-                    runHttpCommand(tokens, out);
-                } else {
-                    //TODO parser verifies commands
-                    formatError("Unknown command: " + commandToken.value);
+                try {
+                    List<Token> tokens = parser.parse(line);
+                    Token commandToken = tokens.get(0);
+                    if (generalCommandInterpreter.supports(commandToken)) {
+                        runGeneralCommand(tokens, out);
+                    } else if (httpCommandInterpreter.supports(commandToken)) {
+                        runHttpCommand(tokens, out);
+                    } else {
+                        formatError("Unknown command: " + commandToken.value);
+                    }
+                } catch (IllegalArgumentException e) {
+                    out.println(formatError(e.getMessage()));
+                } catch (ParsingException e) {
+                    out.println(formatError(e.getMessage()));
+                } catch (RestClientException e) {
+                    Throwable cause = e.getRootCause() != null ? e.getRootCause() : e;
+                    out.println(formatError(cause.getMessage()));
+                } finally {
+                    out.flush();
                 }
             }
         }
+
     }
 
     private void runGeneralCommand(List<Token> tokens, PrintWriter out) {
@@ -112,40 +117,11 @@ public class Application {
         Ansi ansi = ansi();
         ansi.fg(GREEN).a(result).reset();
         out.println(ansi.toString());
-        out.flush();
     }
-
 
     private void runHttpCommand(List<Token> tokens, PrintWriter out) {
-        try {
-            ResponseEntity<Map<String, Object>> response = httpCommandInterpreter.interpret(tokens);
-            printResponse(out, response);
-        } catch (ParsingException e) {
-            out.println(formatError(e.getMessage()));
-        } catch (RestClientException e) {
-            Throwable cause = e.getRootCause() != null ? e.getRootCause() : e;
-            out.println(formatError(cause.getMessage()));
-        } finally {
-            out.flush();
-        }
-    }
-
-    private void evaluateExpression(String line, PrintWriter out) {
-        String expressionString = line.substring(5).trim();
-        try {
-            Expression expression = expressionParser.parseExpression(expressionString);
-            Object value = expression.getValue(buffer);
-            out.println(value);
-        } catch (ExpressionException e) {
-            out.println(formatError(e.getMessage()));
-        } finally {
-            out.flush();
-        }
-    }
-
-    private void printBuffer(PrintWriter out) {
-        out.println(buffer);
-        out.flush();
+        ResponseEntity<Map<String, Object>> response = httpCommandInterpreter.interpret(tokens);
+        printResponse(out, response);
     }
 
     private void printResponse(PrintWriter out, ResponseEntity<Map<String, Object>> response) {
@@ -169,16 +145,6 @@ public class Application {
         return ansi.fg(RED).a("=== ").a(message).a(" ===").fg(DEFAULT).toString();
     }
 
-    public static void main(String[] args) throws IOException {
-        AnnotationConfigApplicationContext context =
-                new AnnotationConfigApplicationContext(ApplicationConfig.class, CommandsConfig.class);
-        context.registerShutdownHook();
-        Application application = context.getBean(Application.class);
-        AnsiConsole.systemInstall();
-        printLogo();
-        application.run();
-    }
-
     private static void printLogo() {
         Ansi ansi = ansi();
 
@@ -188,6 +154,16 @@ public class Application {
                 "\\___/ \\__/_/ /_/  \\_, /     \n" +
                 "                 /___/      ").newline().reset();
         System.out.println(ansi);
+    }
+
+    public static void main(String[] args) throws IOException {
+        AnnotationConfigApplicationContext context =
+                new AnnotationConfigApplicationContext(ApplicationConfig.class, CommandsConfig.class);
+        context.registerShutdownHook();
+        Application application = context.getBean(Application.class);
+        AnsiConsole.systemInstall();
+        printLogo();
+        application.run();
     }
 
 }

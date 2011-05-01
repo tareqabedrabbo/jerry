@@ -6,10 +6,10 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.ParseException;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.Assert;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -30,6 +30,8 @@ public class DefaultParser implements Parser {
 
     private Buffer buffer;
 
+    private List<String> allCommands;
+
     @Autowired
     public void setExpressionParser(ExpressionParser expressionParser) {
         this.expressionParser = expressionParser;
@@ -45,18 +47,26 @@ public class DefaultParser implements Parser {
         this.evaluationContext = evaluationContext;
     }
 
+    @Resource(name = "allCommands")
+    public void setAllCommands(List<String> allCommands) {
+        this.allCommands = allCommands;
+    }
+
     @Override
-    public List<Token> parse(String line) {
+    public List<Token> parse(String line) throws ParsingException {
         Assert.hasText(line);
         line = line.trim();
         return evaluate(tokenise(line));
     }
 
-    private List<Token> tokenise(String line) {
+    private List<Token> tokenise(String line) throws ParsingException {
         List<Token> tokens = new ArrayList<Token>();
         Scanner scanner = new Scanner(line);
         String command = scanner.next();
         Token commandToken = new Token(Token.Type.COMMAND, command);
+        if (!allCommands.contains(commandToken.value)) {
+            throw new ParsingException("Unknown command " + commandToken.value);
+        }
         tokens.add(commandToken);
 
         // eval is a special case

@@ -68,7 +68,6 @@ public class ApplicationConfig {
     @Bean
     public Application application() throws IOException {
         Application application = new Application();
-        application.setBuffer(buffer());
         application.setConsoleReader(consoleReader());
         application.setHttpCommandInterpreter(httpCommandInterpreter());
         application.setFormatter(formatter());

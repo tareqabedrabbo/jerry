@@ -7,5 +7,5 @@ import java.util.List;
  */
 public interface Parser {
 
-    List<Token> parse(String line);
+    List<Token> parse(String line) throws ParsingException;
 }

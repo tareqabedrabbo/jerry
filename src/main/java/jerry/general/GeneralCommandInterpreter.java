@@ -2,11 +2,15 @@ package jerry.general;
 
 import jerry.Buffer;
 import jerry.command.Interpreter;
+import jerry.parse.ParsingException;
 import jerry.parse.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.EvaluationException;
 import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionException;
 import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.ParseException;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -64,9 +68,13 @@ public class GeneralCommandInterpreter implements Interpreter<String> {
 
     }
 
-    private String evaluate(String value) {
-        Expression expression = expressionParser.parseExpression(value);
-        return expression.getValue(evaluationContext).toString();
+    private String evaluate(String value) throws ParsingException {
+        try {
+            Expression expression = expressionParser.parseExpression(value);
+            return expression.getValue(evaluationContext).toString();
+        } catch (ExpressionException e) {
+            throw new ParsingException(e.getMessage(), e);
+        }
     }
 
     @Override
